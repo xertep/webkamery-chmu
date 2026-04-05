@@ -298,7 +298,7 @@ def short_name(full_name):
 # ----------------------
 # UI
 # ----------------------
-st.set_page_config(layout="wide")
+# st.set_page_config(layout="wide")
 st.title("📷 Webkamery ČHMÚ")
 
 st.markdown("""
