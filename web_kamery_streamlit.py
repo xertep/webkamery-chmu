@@ -329,7 +329,7 @@ with st.spinner("Scraping webcams..."):
 
 final = match_webcams(image_data, webcam_links)
 
-cols_per_row = 5
+cols_per_row = 4
 items = list(final.items())
 
 for i in range(0, len(items), cols_per_row):
