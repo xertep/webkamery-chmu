@@ -338,36 +338,46 @@ if st.session_state.get("last_update_time") is not None:
 
 st.markdown("""
 <style>
-/* Reduce space ABOVE the app content (but keep Streamlit top bar) */
-div[data-testid="stAppViewContainer"] > .main {
-    padding-top: 1.2rem;
+
+/* Reduce global block spacing (THIS is the key one) */
+div[data-testid="stVerticalBlock"] {
+    gap: 0.4rem;
 }
 
-/* Reduce extra top spacing inside main block */
+/* Reduce top padding (keep Streamlit header safe) */
 div.block-container {
-    padding-top: 1rem;
+    padding-top: 0.8rem;
 }
 
-/* Optional: tighten title spacing */
+/* Title spacing tighter */
 h1 {
-    margin-top: 0.2rem;
+    margin-top: 0rem;
+    margin-bottom: 0.2rem;
 }
 
-/* remove gap under image */
+/* Caption spacing tighter */
+[data-testid="stCaptionContainer"] {
+    margin-top: -0.4rem;
+    margin-bottom: 0.2rem;
+}
+
+/* Button spacing tighter */
+div[data-testid="stButton"] {
+    margin-top: -0.4rem;
+    margin-bottom: 0.2rem;
+}
+
+/* Image spacing */
 img {
     border-radius: 8px;
     margin-bottom: 2px;
 }
 
-/* tighten button spacing */
+/* Link button spacing */
 div[data-testid="stLinkButton"] {
     margin-top: -8px;
 }
 
-/* add spacing between rows */
-.row-spacing {
-    margin-bottom: 25px;
-}
 </style>
 """, unsafe_allow_html=True)
 
