@@ -15,7 +15,8 @@ import time
 from playwright.sync_api import sync_playwright
 
 st.set_page_config(
-    page_title = "📷 ČHMÚ webkamery",
+    page_title = "ČHMÚ webkamery",
+    page_icon="📷",
     layout="wide"
     )
 
@@ -308,7 +309,7 @@ img {
 }
 
 [data-testid="stCaptionContainer"] {
-    margin-top: -10px;
+    margin-top: -14px;
 }
 </style>
 """, unsafe_allow_html=True)
