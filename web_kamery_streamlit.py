@@ -112,12 +112,21 @@ def match_webcams(image_data, webcam_links):
 
     for name, link in webcam_links.items():
         place_name = name.split(" -")[0]
+
+        # extract direction from dictionary name (e.g. "SZ", "JV")
+        direction_match = re.search(r'\((.*?)\)', name)
+        dict_direction = direction_match.group(1) if direction_match else None
+
         matched = None
 
         for item in image_data:
             img_place = item["alt"].split(" (")[0]
 
-            if place_name == img_place:
+            img_direction_match = re.search(r'\((.*?)\)', item["alt"])
+            img_direction = img_direction_match.group(1) if img_direction_match else None
+
+            # 🔑 MATCH place AND direction
+            if place_name == img_place and dict_direction == img_direction:
                 matched = item
                 break
 
@@ -266,14 +275,11 @@ for i in range(0, len(items), cols_per_row):
     for col, (name, data) in zip(cols, row_items):
         with col:
 
-            # 🔑 ALWAYS clickable
-            st.markdown(f'<a href="{data["link"]}" target="_blank">', unsafe_allow_html=True)
-
             if data["img"]:
                 st.image(data["img"], width=200)
             else:
-                st.image(PLACEHOLDER_IMG, width=200)  # 🔑 same size
+                st.image(PLACEHOLDER_IMG, width=200)
 
-            st.markdown('</a>', unsafe_allow_html=True)
+            st.link_button("🔗 Open webcam", data["link"])
 
             st.caption(name)
