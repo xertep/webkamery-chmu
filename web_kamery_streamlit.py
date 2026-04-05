@@ -229,7 +229,7 @@ webcam_links = {
     "Radar Brdy (JV) / Radar Brdy - 912 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=brdy",
     "Kocelovice (S-SZ) / Kocelovice - 525 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11487",
     "Teplice (Z) / Teplice - 252 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=U1TEPL01",
-    "Teplice (JV) / Teplice - 252 m n.m. - Z směr": "https://www.chmi.cz/namerena-data/webkamera/teplice2-teplice",
+    "Teplice (JV) / Teplice - 252 m n.m. - JV směr": "https://www.chmi.cz/namerena-data/webkamera/teplice2-teplice",
     "Smolnice (S) / Smolnice - 345 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=U1SMOL01",
     "Rožmitál p. Třem. (J) / Rožmitál p. Třem. - 538 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=C1ROZM01",
     "Volary (S) / Volary - 745 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=volary",
