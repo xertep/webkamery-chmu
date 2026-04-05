@@ -7,9 +7,9 @@ from io import BytesIO
 import os
 import subprocess
 
-# install playwright browser only if not already installed
+"""# install playwright browser only if not already installed
 if not os.path.exists("/home/appuser/.cache/ms-playwright"):
-    subprocess.run(["playwright", "install", "chromium"])
+    subprocess.run(["playwright", "install", "chromium"])"""
 
 from playwright.sync_api import sync_playwright
 
@@ -70,10 +70,9 @@ def scrape_images():
                 if match:
                     place = match.group(1).strip()
                     direction = match.group(2).strip()
-
-                    key = f"{place} ({direction})"
                 else:
-                    key = clean_alt.strip()
+                    place = clean_alt.strip()
+                    direction = "unknown"
 
                 if src.startswith("data:image"):
                     try:
@@ -115,14 +114,23 @@ def scrape_images():
     return image_data
 
 
-def normalize_name(name):
+
+
+def extract_dict_place_direction(name):
+    import re
+
     parts = name.split(" -")
-    place = parts[0]
+    place = parts[0].strip()
 
-    # extract direction (before "směr")
-    direction = parts[-1].replace("směr", "").strip()
+    # find direction like "SZ směr"
+    match = re.search(r"([A-Z]+)\s*směr", name)
 
-    return f"{place} ({direction})"
+    if match:
+        direction = match.group(1)
+    else:
+        direction = "unknown"
+
+    return place, direction
 
 
 # ----------------------
@@ -131,13 +139,17 @@ def normalize_name(name):
 def match_webcams(image_data, webcam_links):
     final = {}
 
-    # 🔑 build lookup dictionary (fast + no duplicates)
-    image_lookup = {item["key"]: item for item in image_data}
+    image_index = {}
+
+    # build lookup
+    for item in image_data:
+        key = (item["place"], item["direction"])
+        image_index[key] = item
 
     for name, link in webcam_links.items():
-        key = normalize_name(name)
+        place, direction = extract_dict_place_direction(name)
 
-        matched = image_lookup.get(key)
+        matched = image_index.get((place, direction))
 
         final[name] = {
             "img": matched["img_bytes"] if matched else None,
