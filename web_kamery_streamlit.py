@@ -234,7 +234,7 @@ img {
 }
 
 [data-testid="stVerticalBlock"] > div {
-    text-align: center;
+    text-align: left;
 }
 </style>
 """, unsafe_allow_html=True)
