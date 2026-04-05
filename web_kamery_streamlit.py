@@ -27,7 +27,7 @@ st.set_page_config(
     layout="wide"
     )
 
-st_autorefresh(interval=600000, key="refresh")
+st_autorefresh(interval=180000, key="refresh")
 
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time.time()
@@ -333,7 +333,7 @@ if st.session_state.get("last_update_time") is not None:
         status = "⚪"
 
     st.caption(
-        f"{status} • Aktualizováno {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))} UTC"
+        f"{status} Aktualizováno {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))} UTC"
     )
 
 st.markdown("""
