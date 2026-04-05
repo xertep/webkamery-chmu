@@ -27,16 +27,10 @@ st.set_page_config(
     layout="wide"
     )
 
-if "selected_cam" not in st.session_state:
-    st.session_state.selected_cam = None
-
-if st.session_state.selected_cam is None:
-    st_autorefresh(interval=180000, key="refresh")
+st_autorefresh(interval=180000, key="refresh")
 
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time.time()
-
-
 
 
 URL = "https://www.chmi.cz/namerena-data/webkamery"
@@ -184,37 +178,6 @@ def scrape_images():
     return image_data
 
 
-def scrape_big_image(url):
-    import base64
-    from bs4 import BeautifulSoup
-    from playwright.sync_api import sync_playwright
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-
-        page.goto(url, wait_until="domcontentloaded")
-        page.wait_for_timeout(2000)
-
-        soup = BeautifulSoup(page.content(), "html.parser")
-
-        img = soup.select_one("img.chmi-playableimage-img")
-
-        if not img:
-            browser.close()
-            return None
-
-        src = img.get("src", "")
-
-        browser.close()
-
-        if src.startswith("data:image"):
-            _, data = src.split(",", 1)
-            return base64.b64decode(data)
-
-        return None
-
-
 # ----------------------
 # MATCH WITH LINKS (simplified but correct)
 # ----------------------
@@ -233,7 +196,7 @@ def match_webcams(image_data, webcam_links):
 
         final[full_name] = {
             "img": matched["img_bytes"] if matched else None,
-            "link": link
+            "link": matched.get("link", link) if matched else link
         }
 
     return final
@@ -356,7 +319,7 @@ def short_name(full_name):
 # ----------------------
 # UI
 # ----------------------
-# st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 st.title("Webkamery ČHMÚ")
 
 if st.session_state.get("last_update_time") is not None:
@@ -449,53 +412,29 @@ else:
         pass
 
 
-if st.session_state.selected_cam is not None:
-
-    name, url = st.session_state.selected_cam
-
-    st.title(short_name(name))
-
-    col1, col2 = st.columns([1, 6])
-
-    with col1:
-        if st.button("⬅ Back"):
-            st.session_state.selected_cam = None
-            st.rerun()
-
-    with st.spinner("Načítám velký obrázek..."):
-        img_bytes = scrape_big_image(url)
-
-    if img_bytes:
-        st.image(img_bytes, use_container_width=True)
-    else:
-        st.error("Image not available")
-
-    st.stop()
-
 
 cols_per_row = 4
 items = list(final.items())
 
 for i in range(0, len(items), cols_per_row):
+    row_items = items[i:i + cols_per_row]
+
+    # 👇 row wrapper (this creates spacing BETWEEN rows)
+    st.markdown('<div class="row-spacing">', unsafe_allow_html=True)
+
     cols = st.columns(cols_per_row)
 
-    for j, col in enumerate(cols):
-        if i + j >= len(items):
-            continue
-
-        name, data = items[i + j]
-
+    for col, (name, data) in zip(cols, row_items):
         with col:
-            # IMAGE
+
             if data["img"]:
                 st.image(data["img"], width=200)
             else:
                 st.image(PLACEHOLDER_IMG, width=200)
 
-            # small spacing
-            st.write("")
+            st.link_button(
+                short_name(name),
+                data["link"]
+            )
 
-            # BUTTON (this is the ONLY clickable thing)
-            if st.button(short_name(name), key=f"btn_{name}"):
-                st.session_state.selected_cam = (name, data["link"])
-                st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
