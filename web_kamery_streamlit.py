@@ -337,6 +337,7 @@ for i in range(0, len(items), cols_per_row):
             else:
                 st.image(PLACEHOLDER_IMG, width=200)
 
-            st.link_button("🔗 Open webcam", data["link"])
-
-            st.caption(short_name(name))
+            st.link_button(
+                short_name(name),
+                data["link"]
+            )
