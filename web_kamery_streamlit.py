@@ -25,7 +25,7 @@ if "last_refresh" not in st.session_state:
 
 if time.time() - st.session_state.last_refresh > 600:
     st.session_state.last_refresh = time.time()
-    st.experimental_rerun()
+    st.rerun()
 
 URL = "https://www.chmi.cz/namerena-data/webkamery"
 
