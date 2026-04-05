@@ -15,6 +15,12 @@ from streamlit_autorefresh import st_autorefresh
 
 from playwright.sync_api import sync_playwright
 
+if "cached_data" not in st.session_state:
+    st.session_state.cached_data = None
+
+if "last_update_time" not in st.session_state:
+    st.session_state.last_update_time = time.time()
+
 st.set_page_config(
     page_title = "ČHMÚ webkamery",
     page_icon="📷",
@@ -312,14 +318,6 @@ def short_name(full_name):
     return full_name
 
 
-# ----------------------
-# INIT STATE
-# ----------------------
-if "cached_data" not in st.session_state:
-    st.session_state.cached_data = None
-
-if "last_update_time" not in st.session_state:
-    st.session_state.last_update_time = None
 
 # ----------------------
 # UI
@@ -327,7 +325,7 @@ if "last_update_time" not in st.session_state:
 st.set_page_config(layout="wide")
 st.title("📷 Webkamery ČHMÚ")
 
-if st.session_state.get("last_update_time"):
+if st.session_state.get("last_update_time") is not None:
     age = time.time() - st.session_state.last_update_time
 
     if age < 300:
