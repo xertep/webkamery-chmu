@@ -27,7 +27,7 @@ st.set_page_config(
     layout="wide"
     )
 
-st_autorefresh(interval=120000, key="refresh")
+st_autorefresh(interval=600000, key="refresh")
 
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time.time()
@@ -325,15 +325,15 @@ st.title("📷 Webkamery ČHMÚ")
 if st.session_state.get("last_update_time") is not None:
     age = time.time() - st.session_state.last_update_time
 
-    if age < 300:
+    if age < 120:
         status = "🟢 živě"
-    elif age < 600:
+    elif age < 240:
         status = "🟡 nedávno"
     else:
         status = "⚪ starší"
 
     st.caption(
-        f"{status} • {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))} UTC"
+        f"{status} • Aktualizováno {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))} UTC"
     )
 
 st.markdown("""
