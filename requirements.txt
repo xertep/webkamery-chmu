@@ -2,3 +2,4 @@ streamlit
 playwright
 beautifulsoup4
 pillow
+streamlit-autorefresh
