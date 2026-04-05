@@ -18,6 +18,15 @@ URL = "https://www.chmi.cz/namerena-data/webkamery"
 WIDTH = 200
 HEIGHT = 150
 
+
+def create_placeholder():
+    img = Image.new("RGB", (WIDTH, HEIGHT), (220, 220, 220))
+    buffer = BytesIO()
+    img.save(buffer, format="JPEG")
+    return buffer.getvalue()
+
+PLACEHOLDER_IMG = create_placeholder()
+
 # ----------------------
 # CACHE
 # ----------------------
@@ -256,11 +265,15 @@ for i in range(0, len(items), cols_per_row):
 
     for col, (name, data) in zip(cols, row_items):
         with col:
+
+            # 🔑 ALWAYS clickable
+            st.markdown(f'<a href="{data["link"]}" target="_blank">', unsafe_allow_html=True)
+
             if data["img"]:
-                st.markdown(f'<a href="{data["link"]}" target="_blank">', unsafe_allow_html=True)
                 st.image(data["img"], width=200)
-                st.markdown('</a>', unsafe_allow_html=True)
             else:
-                st.write("⬜")
+                st.image(PLACEHOLDER_IMG, width=200)  # 🔑 same size
+
+            st.markdown('</a>', unsafe_allow_html=True)
 
             st.caption(name)
