@@ -13,6 +13,10 @@ import subprocess
 
 from playwright.sync_api import sync_playwright
 
+st.set_page_config(layout="wide")
+
+st.autorefresh(interval=600000, key="auto_refresh")
+
 URL = "https://www.chmi.cz/namerena-data/webkamery"
 
 WIDTH = 200
@@ -275,6 +279,11 @@ webcam_links = {
 }
 
 
+def short_name(full_name):
+    if " / " in full_name:
+        return full_name.split(" / ", 1)[1].strip()
+    return full_name
+
 
 # ----------------------
 # UI
@@ -286,10 +295,11 @@ st.markdown("""
 <style>
 img {
     border-radius: 8px;
+    margin-bottom: 0px;
 }
 
-[data-testid="stVerticalBlock"] > div {
-    text-align: left;
+[data-testid="stCaptionContainer"] {
+    margin-top: -10px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -319,4 +329,4 @@ for i in range(0, len(items), cols_per_row):
 
             st.link_button("🔗 Open webcam", data["link"])
 
-            st.caption(name)
+            st.caption(short_name(name))
