@@ -303,18 +303,25 @@ st.title("📷 Webkamery ČHMÚ")
 
 st.markdown("""
 <style>
+/* remove gap under image */
 img {
     border-radius: 8px;
-    margin-bottom: 0px;
+    margin-bottom: 2px;
 }
 
-[data-testid="stCaptionContainer"] {
-    margin-top: -14px;
+/* tighten button spacing */
+div[data-testid="stLinkButton"] {
+    margin-top: -8px;
+}
+
+/* add spacing between rows */
+.row-spacing {
+    margin-bottom: 25px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-if st.button("🔄 Refresh now"):
+if st.button("🔄 Obnovit stránku"): 
     st.cache_data.clear()
 
 with st.spinner("Scraping webcams..."):
