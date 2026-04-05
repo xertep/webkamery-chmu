@@ -310,12 +310,21 @@ def short_name(full_name):
 
 
 # ----------------------
+# INIT STATE
+# ----------------------
+if "cached_data" not in st.session_state:
+    st.session_state.cached_data = None
+
+if "last_update_time" not in st.session_state:
+    st.session_state.last_update_time = None
+
+# ----------------------
 # UI
 # ----------------------
 st.set_page_config(layout="wide")
 st.title("📷 Webkamery ČHMÚ")
 
-if st.session_state.last_update_time:
+if st.session_state.get("last_update_time"):
     age = time.time() - st.session_state.last_update_time
 
     if age < 300:
@@ -328,8 +337,6 @@ if st.session_state.last_update_time:
     st.caption(
         f"{status} • {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))}"
     )
-
-st.caption(f"Aktualizováno: {time.strftime('%H:%M:%S')}")
 
 st.markdown("""
 <style>
@@ -353,15 +360,6 @@ div[data-testid="stLinkButton"] {
 
 if st.button("🔄 Obnovit stránku"): 
     st.cache_data.clear()
-
-# ----------------------
-# INIT STATE
-# ----------------------
-if "cached_data" not in st.session_state:
-    st.session_state.cached_data = None
-
-if "last_update_time" not in st.session_state:
-    st.session_state.last_update_time = None
 
 
 # ----------------------
