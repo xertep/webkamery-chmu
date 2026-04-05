@@ -477,25 +477,25 @@ cols_per_row = 4
 items = list(final.items())
 
 for i in range(0, len(items), cols_per_row):
-    row_items = items[i:i + cols_per_row]
-
-    # 👇 row wrapper (this creates spacing BETWEEN rows)
-    st.markdown('<div class="row-spacing">', unsafe_allow_html=True)
-
     cols = st.columns(cols_per_row)
 
-    for col, (name, data) in zip(cols, row_items):
-        with col:
+    for j, col in enumerate(cols):
+        if i + j >= len(items):
+            continue
 
+        name, data = items[i + j]
+
+        with col:
+            # IMAGE
             if data["img"]:
                 st.image(data["img"], width=200)
             else:
                 st.image(PLACEHOLDER_IMG, width=200)
 
-            clicked = st.button(short_name(name), key=name)
+            # small spacing
+            st.write("")
 
-            if clicked:
+            # BUTTON (this is the ONLY clickable thing)
+            if st.button(short_name(name), key=f"btn_{name}"):
                 st.session_state.selected_cam = (name, data["link"])
                 st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
