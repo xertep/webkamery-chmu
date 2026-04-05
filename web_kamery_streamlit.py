@@ -75,11 +75,20 @@ def scrape_images():
 
             soup = BeautifulSoup(page.content(), "html.parser")
 
-            for img in soup.find_all("img"):
+            for a in soup.find_all("a", href=True):
 
-                # 🔑 FIX: check both src AND lazy-load src
+                img = a.find("img")
+                if not img:
+                    continue
+
+                href = a["href"]  # 🔑 THIS IS THE PUBLIC LINK
+
                 src = img.get("src") or img.get("data-src") or ""
                 alt = img.get("alt", "")
+
+                # 🔑 make absolute URL if needed
+                if href.startswith("/"):
+                    href = "https://www.chmi.cz" + href
 
                 if not alt.startswith("Náhled webkamery"):
                     continue
@@ -146,6 +155,7 @@ def scrape_images():
                         image_data.append({
                             "img_bytes": buffer.getvalue(),
                             "key": key,
+                            "link": href,
                             "is_gif": False
                         })
 
@@ -176,7 +186,7 @@ def match_webcams(image_data, webcam_links):
 
         final[full_name] = {
             "img": matched["img_bytes"] if matched else None,
-            "link": link
+            "link": matched["link"] if matched else link
         }
 
     return final
