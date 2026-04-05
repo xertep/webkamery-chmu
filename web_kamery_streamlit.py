@@ -320,7 +320,7 @@ def short_name(full_name):
 # UI
 # ----------------------
 st.set_page_config(layout="wide")
-st.title("📷 Webkamery ČHMÚ")
+st.title("Webkamery ČHMÚ")
 
 if st.session_state.get("last_update_time") is not None:
     age = time.time() - st.session_state.last_update_time
