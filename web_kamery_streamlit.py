@@ -32,6 +32,9 @@ st_autorefresh(interval=180000, key="refresh")
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time.time()
 
+if "selected_cam" not in st.session_state:
+    st.session_state.selected_cam = None
+
 
 URL = "https://www.chmi.cz/namerena-data/webkamery"
 
@@ -176,6 +179,37 @@ def scrape_images():
         browser.close()
 
     return image_data
+
+
+def scrape_big_image(url):
+    import base64
+    from bs4 import BeautifulSoup
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+
+        page.goto(url, wait_until="domcontentloaded")
+        page.wait_for_timeout(2000)
+
+        soup = BeautifulSoup(page.content(), "html.parser")
+
+        img = soup.select_one("img.chmi-playableimage-img")
+
+        if not img:
+            browser.close()
+            return None
+
+        src = img.get("src", "")
+
+        browser.close()
+
+        if src.startswith("data:image"):
+            _, data = src.split(",", 1)
+            return base64.b64decode(data)
+
+        return None
 
 
 # ----------------------
@@ -412,6 +446,29 @@ else:
         pass
 
 
+if st.session_state.selected_cam is not None:
+
+    name, url = st.session_state.selected_cam
+
+    st.title(short_name(name))
+
+    col1, col2 = st.columns([1, 6])
+
+    with col1:
+        if st.button("⬅ Back"):
+            st.session_state.selected_cam = None
+            st.rerun()
+
+    with st.spinner("Načítám velký obrázek..."):
+        img_bytes = scrape_big_image(url)
+
+    if img_bytes:
+        st.image(img_bytes, use_container_width=True)
+    else:
+        st.error("Image not available")
+
+    st.stop()
+
 
 cols_per_row = 4
 items = list(final.items())
@@ -432,9 +489,8 @@ for i in range(0, len(items), cols_per_row):
             else:
                 st.image(PLACEHOLDER_IMG, width=200)
 
-            st.link_button(
-                short_name(name),
-                data["link"]
-            )
+            if st.button(short_name(name), key=name):
+                st.session_state.selected_cam = (name, data["link"])
+                st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
