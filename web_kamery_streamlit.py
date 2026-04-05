@@ -41,6 +41,9 @@ def create_placeholder():
 
 PLACEHOLDER_IMG = create_placeholder()
 
+if "cached_data" not in st.session_state:
+    st.session_state.cached_data = None
+
 # ----------------------
 # CACHE
 # ----------------------
@@ -167,7 +170,6 @@ def scrape_images():
         browser.close()
 
     return image_data
-
 
 
 # ----------------------
@@ -313,6 +315,22 @@ def short_name(full_name):
 st.set_page_config(layout="wide")
 st.title("📷 Webkamery ČHMÚ")
 
+if st.session_state.last_update_time:
+    age = time.time() - st.session_state.last_update_time
+
+    if age < 300:
+        status = "🟢 živě"
+    elif age < 600:
+        status = "🟡 nedávno"
+    else:
+        status = "⚪ starší"
+
+    st.caption(
+        f"{status} • {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))}"
+    )
+
+st.caption(f"Aktualizováno: {time.strftime('%H:%M:%S')}")
+
 st.markdown("""
 <style>
 /* remove gap under image */
@@ -336,10 +354,46 @@ div[data-testid="stLinkButton"] {
 if st.button("🔄 Obnovit stránku"): 
     st.cache_data.clear()
 
-with st.spinner("Scraping webcams..."):
-    image_data = scrape_images()
+# ----------------------
+# INIT STATE
+# ----------------------
+if "cached_data" not in st.session_state:
+    st.session_state.cached_data = None
 
-final = match_webcams(image_data, webcam_links)
+if "last_update_time" not in st.session_state:
+    st.session_state.last_update_time = None
+
+
+# ----------------------
+# LOAD DATA (silent refresh style)
+# ----------------------
+if st.session_state.cached_data is None:
+    # FIRST LOAD → show spinner
+    with st.spinner("Načítám webkamery..."):
+        image_data = scrape_images()
+        final = match_webcams(image_data, webcam_links)
+
+        st.session_state.cached_data = final
+        st.session_state.last_update_time = time.time()
+
+else:
+    # show cached immediately
+    final = st.session_state.cached_data
+
+    # try background refresh (no spinner)
+    try:
+        image_data = scrape_images()
+        new_final = match_webcams(image_data, webcam_links)
+
+        st.session_state.cached_data = new_final
+        st.session_state.last_update_time = time.time()
+
+        final = new_final
+
+    except:
+        pass
+
+
 
 cols_per_row = 4
 items = list(final.items())
