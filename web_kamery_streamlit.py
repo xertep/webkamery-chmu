@@ -64,6 +64,17 @@ def scrape_images():
 
                 clean_alt = re.sub(r'^Náhled webkamery\s+', '', alt)
 
+                # 🔑 extract place + direction
+                match = re.match(r"(.+?)\s*\((.+?)\)", clean_alt)
+
+                if match:
+                    place = match.group(1).strip()
+                    direction = match.group(2).strip()
+
+                    key = f"{place} ({direction})"
+                else:
+                    key = clean_alt.strip()
+
                 if src.startswith("data:image"):
                     try:
                         header, data = src.split(",", 1)
@@ -76,7 +87,7 @@ def scrape_images():
                             # keep raw bytes → preserves animation
                             image_data.append({
                                 "img_bytes": image_bytes,
-                                "alt": clean_alt,
+                                "key": key,
                                 "is_gif": True
                             })
                         else:
@@ -90,7 +101,7 @@ def scrape_images():
 
                             image_data.append({
                                 "img_bytes": buffer.getvalue(),
-                                "alt": clean_alt,
+                                "key": key,
                                 "is_gif": False
                             })
 
@@ -104,31 +115,29 @@ def scrape_images():
     return image_data
 
 
+def normalize_name(name):
+    parts = name.split(" -")
+    place = parts[0]
+
+    # extract direction (before "směr")
+    direction = parts[-1].replace("směr", "").strip()
+
+    return f"{place} ({direction})"
+
+
 # ----------------------
 # MATCH WITH LINKS (simplified but correct)
 # ----------------------
 def match_webcams(image_data, webcam_links):
     final = {}
 
+    # 🔑 build lookup dictionary (fast + no duplicates)
+    image_lookup = {item["key"]: item for item in image_data}
+
     for name, link in webcam_links.items():
-        place_name = name.split(" -")[0]
+        key = normalize_name(name)
 
-        # extract direction from dictionary name (e.g. "SZ", "JV")
-        direction_match = re.search(r'\((.*?)\)', name)
-        dict_direction = direction_match.group(1) if direction_match else None
-
-        matched = None
-
-        for item in image_data:
-            img_place = item["alt"].split(" (")[0]
-
-            img_direction_match = re.search(r'\((.*?)\)', item["alt"])
-            img_direction = img_direction_match.group(1) if img_direction_match else None
-
-            # 🔑 MATCH place AND direction
-            if place_name == img_place and dict_direction == img_direction:
-                matched = item
-                break
+        matched = image_lookup.get(key)
 
         final[name] = {
             "img": matched["img_bytes"] if matched else None,
