@@ -4,6 +4,13 @@ import re
 from bs4 import BeautifulSoup
 from PIL import Image
 from io import BytesIO
+import os
+import subprocess
+
+# install playwright browser only if not already installed
+if not os.path.exists("/home/appuser/.cache/ms-playwright"):
+    subprocess.run(["playwright", "install", "chromium"])
+
 from playwright.sync_api import sync_playwright
 
 URL = "https://www.chmi.cz/namerena-data/webkamery"
@@ -100,7 +107,7 @@ st.title("📷 Webkamery ČHMÚ")
 if st.button("🔄 Refresh now"):
     st.cache_data.clear()
 
-with st.spinner("Scraping webcams..."):
+with st.spinner("Scraping webcams (this may take ~20s)..."):
     data = scrape_images()
 
 final_data = match_webcams(data)

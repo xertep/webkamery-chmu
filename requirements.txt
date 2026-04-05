@@ -2,4 +2,3 @@ streamlit
 playwright
 beautifulsoup4
 pillow
-playwright install chromium
