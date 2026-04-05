@@ -315,45 +315,6 @@ def short_name(full_name):
     return full_name
 
 
-@st.cache_data(ttl=60)
-def get_cam_image_bytes(url):
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-
-            page.goto(url, timeout=60000, wait_until="domcontentloaded")
-
-            # 🔥 wait a bit for JS injection
-            page.wait_for_timeout(3000)
-
-            # try to find image multiple times (more robust than single wait)
-            img = None
-
-            for _ in range(5):
-                img = page.locator("img.chmi-playableimage-img").first
-                src = img.get_attribute("src")
-
-                if src and src.startswith("data:image"):
-                    break
-
-                page.wait_for_timeout(1000)
-
-            browser.close()
-
-            if not src:
-                return None
-
-            if src.startswith("data:image"):
-                header, data = src.split(",", 1)
-                return base64.b64decode(data)
-
-            return None
-
-    except Exception:
-        return None
-
-
 
 # ----------------------
 # UI
@@ -471,12 +432,9 @@ for i in range(0, len(items), cols_per_row):
             else:
                 st.image(PLACEHOLDER_IMG, width=200)
 
-            with st.expander(short_name(name)):
-                img_bytes = get_cam_image_bytes(data["link"])
-
-                if img_bytes:
-                    st.image(img_bytes, use_container_width=True)
-                else:
-                    st.write("❌ Image not available")
+            st.link_button(
+                short_name(name),
+                data["link"]
+            )
 
     st.markdown('</div>', unsafe_allow_html=True)
