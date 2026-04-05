@@ -54,7 +54,7 @@ def scrape_images():
 
                     # 🔑 IMPORTANT: wait for full re-render
                     page.wait_for_load_state("networkidle")
-                    page.wait_for_timeout(1500)
+                    page.wait_for_selector("img[alt^='Náhled webkamery']", timeout=5000)
 
                 except:
                     continue
