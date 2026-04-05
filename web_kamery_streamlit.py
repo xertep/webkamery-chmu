@@ -233,7 +233,7 @@ def match_webcams(image_data, webcam_links):
 
         final[full_name] = {
             "img": matched["img_bytes"] if matched else None,
-            "link": matched.get("link", link) if matched else link
+            "link": link
         }
 
     return final
