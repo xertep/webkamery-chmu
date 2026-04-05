@@ -7,6 +7,7 @@ from io import BytesIO
 import os
 import subprocess
 import time
+from streamlit_autorefresh import st_autorefresh
 
 # install playwright browser only if not already installed
 # if not os.path.exists("/home/appuser/.cache/ms-playwright"):
@@ -19,6 +20,8 @@ st.set_page_config(
     page_icon="📷",
     layout="wide"
     )
+
+st_autorefresh(interval=600000, key="refresh")
 
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time.time()
@@ -335,7 +338,7 @@ if st.session_state.get("last_update_time"):
         status = "⚪ starší"
 
     st.caption(
-        f"{status} • {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))}"
+        f"{status} • {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))} UTC"
     )
 
 st.markdown("""
@@ -383,13 +386,15 @@ else:
         image_data = scrape_images()
         new_final = match_webcams(image_data, webcam_links)
 
-        st.session_state.cached_data = new_final
-        st.session_state.last_update_time = time.time()
+        # update only if changed
+        if new_final != st.session_state.cached_data:
+            st.session_state.cached_data = new_final
+            st.session_state.last_update_time = time.time()
 
-        final = new_final
+        final = st.session_state.cached_data
 
     except:
-        pass
+        final = st.session_state.cached_data
 
 
 
