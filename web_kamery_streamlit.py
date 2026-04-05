@@ -118,6 +118,7 @@ def scrape_images():
                             image_data.append({
                                 "img_bytes": image_bytes,
                                 "key": key,
+                                "link": href,
                                 "is_gif": True
                             })
                         else:
@@ -130,6 +131,7 @@ def scrape_images():
                             image_data.append({
                                 "img_bytes": buffer.getvalue(),
                                 "key": key,
+                                "link": href,
                                 "is_gif": False
                             })
 
@@ -186,7 +188,7 @@ def match_webcams(image_data, webcam_links):
 
         final[full_name] = {
             "img": matched["img_bytes"] if matched else None,
-            "link": matched["link"] if matched else link
+            "link": matched.get("link", link) if matched else link
         }
 
     return final
