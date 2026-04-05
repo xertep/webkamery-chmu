@@ -27,13 +27,16 @@ st.set_page_config(
     layout="wide"
     )
 
-st_autorefresh(interval=180000, key="refresh")
+if "selected_cam" not in st.session_state:
+    st.session_state.selected_cam = None
+
+if st.session_state.selected_cam is None:
+    st_autorefresh(interval=180000, key="refresh")
 
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time.time()
 
-if "selected_cam" not in st.session_state:
-    st.session_state.selected_cam = None
+
 
 
 URL = "https://www.chmi.cz/namerena-data/webkamery"
@@ -353,7 +356,7 @@ def short_name(full_name):
 # ----------------------
 # UI
 # ----------------------
-st.set_page_config(layout="wide")
+# st.set_page_config(layout="wide")
 st.title("Webkamery ČHMÚ")
 
 if st.session_state.get("last_update_time") is not None:
@@ -485,11 +488,16 @@ for i in range(0, len(items), cols_per_row):
         with col:
 
             if data["img"]:
-                st.image(data["img"], width=200)
+                st.markdown(
+                    f'<img src="data:image/jpeg;base64,{base64.b64encode(data["img"]).decode()}" width="200">',
+                    unsafe_allow_html=True
+                )
             else:
                 st.image(PLACEHOLDER_IMG, width=200)
 
-            if st.button(short_name(name), key=name):
+            clicked = st.button(short_name(name), key=name)
+
+            if clicked:
                 st.session_state.selected_cam = (name, data["link"])
                 st.rerun()
 
