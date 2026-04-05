@@ -6,6 +6,7 @@ from PIL import Image
 from io import BytesIO
 import os
 import subprocess
+import time
 
 # install playwright browser only if not already installed
 # if not os.path.exists("/home/appuser/.cache/ms-playwright"):
@@ -13,9 +14,17 @@ import subprocess
 
 from playwright.sync_api import sync_playwright
 
-st.set_page_config(layout="wide")
+st.set_page_config(
+    page_title = "📷 ČHMÚ webkamery",
+    layout="wide"
+    )
 
-st.autorefresh(interval=600000, key="auto_refresh")
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = time.time()
+
+if time.time() - st.session_state.last_refresh > 600:
+    st.session_state.last_refresh = time.time()
+    st.experimental_rerun()
 
 URL = "https://www.chmi.cz/namerena-data/webkamery"
 
