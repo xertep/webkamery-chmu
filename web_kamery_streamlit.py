@@ -334,6 +334,10 @@ items = list(final.items())
 
 for i in range(0, len(items), cols_per_row):
     row_items = items[i:i + cols_per_row]
+
+    # 👇 row wrapper (this creates spacing BETWEEN rows)
+    st.markdown('<div class="row-spacing">', unsafe_allow_html=True)
+
     cols = st.columns(cols_per_row)
 
     for col, (name, data) in zip(cols, row_items):
@@ -348,3 +352,5 @@ for i in range(0, len(items), cols_per_row):
                 short_name(name),
                 data["link"]
             )
+
+    st.markdown('</div>', unsafe_allow_html=True)
