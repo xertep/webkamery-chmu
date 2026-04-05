@@ -17,7 +17,7 @@ from playwright.sync_api import sync_playwright
 st.set_page_config(
     page_title = "ČHMÚ webkamery",
     page_icon="📷",
-    layout="wide"
+    layout="centered"
     )
 
 if "last_refresh" not in st.session_state:
