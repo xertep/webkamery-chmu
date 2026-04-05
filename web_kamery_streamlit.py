@@ -488,10 +488,7 @@ for i in range(0, len(items), cols_per_row):
         with col:
 
             if data["img"]:
-                st.markdown(
-                    f'<img src="data:image/jpeg;base64,{base64.b64encode(data["img"]).decode()}" width="200">',
-                    unsafe_allow_html=True
-                )
+                st.image(data["img"], width=200)
             else:
                 st.image(PLACEHOLDER_IMG, width=200)
 
