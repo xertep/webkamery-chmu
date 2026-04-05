@@ -115,15 +115,6 @@ def scrape_images():
     return image_data
 
 
-def normalize_name(name):
-    parts = name.split(" -")
-    place = parts[0]
-
-    # extract direction (before "směr")
-    direction = parts[-1].replace("směr", "").strip()
-
-    return f"{place} ({direction})"
-
 
 # ----------------------
 # MATCH WITH LINKS (simplified but correct)
@@ -131,15 +122,17 @@ def normalize_name(name):
 def match_webcams(image_data, webcam_links):
     final = {}
 
-    # 🔑 build lookup dictionary (fast + no duplicates)
+    # scraped lookup: already in format "Place (Direction)"
     image_lookup = {item["key"]: item for item in image_data}
 
-    for name, link in webcam_links.items():
-        key = normalize_name(name)
+    for full_name, link in webcam_links.items():
 
-        matched = image_lookup.get(key)
+        # 🔑 NEW: base name is EXACTLY what's before " /"
+        base_name = full_name.split(" /")[0].strip()
 
-        final[name] = {
+        matched = image_lookup.get(base_name)
+
+        final[full_name] = {
             "img": matched["img_bytes"] if matched else None,
             "link": link
         }
@@ -151,101 +144,108 @@ def match_webcams(image_data, webcam_links):
 # YOUR webcam_links (keep as-is)
 # ----------------------
 webcam_links = {
-    "Cheb - 483 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=11406",
-    "Dyleň - 940 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=L2DYLE01",
-    "Šindelová - 587 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=L3SIND01",
-    "Přimda - 750 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=11423",
-    "Karlovy Vary - 620 m n.m. - VJV směr": "http://kamery.chmi.cz/webcam.php?cam=11414",
-    "Karlovy Vary - 620 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11414_2",
-    "Krásné Údolí - 644 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=L2KRAU01",
-    "Klínovec - 1235 m n.m. - ZJZ směr": "http://kamery.chmi.cz/webcam.php?cam=L3KLIN01",
-    "Kdyně-Koráb - 773 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=kdyne",
-    "Měděnec - 828 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=U1MEDE01",
-    "Hojsova Stráž - 867 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=L1HOJS01",
-    "Klatovy - 425 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=L1KLAT01",
-    "Tušimice - 322 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=11438",
-    "Plzeň-Mikulka - 360 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11450_2",
-    "Plzeň-Mikulka - otočná kamera": "http://kamery.chmi.cz/webcam.php?cam=11450",
-    "Plzeň-Mikulka - 360 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=11450_3",
-    "Strojetice - 371 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=U1STRJ01",
-    "Svatobor - 900 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=svatobor",
-    "Kralovice - 448 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=L2KRAL01",
-    "Horská Kvilda - 1072 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=C1HKVI01",
-    "Kašperk - 914 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=kasperk",
-    "Vlkonice - 493 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=C1VLKO01",
-    "Bučina - 1172 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=bucina",
-    "Churáňov - 1118 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=11457",
-    "Kopisty - 240 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=11433",
-    "Radar Brdy - 912 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=brdy",
-    "Kocelovice - 525 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11487",
-    "Teplice - 252 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=U1TEPL01",
-    "Smolnice - 345 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=U1SMOL01",
-    "Rožmitál p. Třem. - 538 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=C1ROZM01",
-    "Volary - 745 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=volary",
-    "Milešovka - 836 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11464",
-    "Libín Prachatice - 1096 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=libinprach",
-    "Ústí nad Labem - 377 m n.m. - JJZ směr": "http://kamery.chmi.cz/webcam.php?cam=11502",
-    "Příbram - 551 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=P1PRIB01",
-    "Doksany - 158 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11509",
+    "Cheb (SV) / Cheb - 483 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=11406",
+    "Dyleň (Z-SZ) / Dyleň - 940 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=L2DYLE01",
+    "Šindelová (Z) / Šindelová - 587 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=L3SIND01",
+    "Přimda (V) / Přimda - 750 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=11423",
+    "Karlovy Vary (V-JV) / Karlovy Vary - 620 m n.m. - VJV směr": "http://kamery.chmi.cz/webcam.php?cam=11414",
+    "Karlovy Vary (JZ) / Karlovy Vary - 620 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11414_2",
+    "Karlovy Vary (JV) / Karlovy Vary - 620 m n.m. - VJV směr": "https://www.chmi.cz/namerena-data/webkamera/lkkv3-karlovy-vary",
+    "Krásné Údolí (SV) / Krásné Údolí - 644 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=L2KRAU01",
+    "Klínovec (Z-JZ) / Klínovec - 1235 m n.m. - ZJZ směr": "http://kamery.chmi.cz/webcam.php?cam=L3KLIN01",
+    "Kdyně-Koráb (Z) / Kdyně-Koráb - 773 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=kdyne",
+    "Měděnec (V) / Měděnec - 828 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=U1MEDE01",
+    "Hojsova Stráž (S) / Hojsova Stráž - 867 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=L1HOJS01",
+    "Klatovy (J) / Klatovy - 425 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=L1KLAT01",
+    "Tušimice (S) / Tušimice - 322 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=11438",
+    "Plzeň-Mikulka (JZ) / Plzeň-Mikulka - 360 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11450_2",
+    "Plzeň-Mikulka (otočný) / Plzeň-Mikulka - otočná kamera": "http://kamery.chmi.cz/webcam.php?cam=11450",
+    "Plzeň-Mikulka (S) / Plzeň-Mikulka - 360 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=11450_3",
+    "Strojetice (JZ) / Strojetice - 371 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=U1STRJ01",
+    "Svatobor (V) / Svatobor - 900 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=svatobor",
+    "Kralovice (JZ) / Kralovice - 448 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=L2KRAL01",
+    "Horská Kvilda (JV) / Horská Kvilda - 1072 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=C1HKVI01",
+    "Kašperk (Z) / Kašperk - 914 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=kasperk",
+    "Vlkonice (SZ) / Vlkonice - 493 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=C1VLKO01",
+    "Bučina (J-JV) / Bučina - 1172 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=bucina",
+    "Churáňov (SV) / Churáňov - 1118 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=11457",
+    "Kopisty (V) / Kopisty - 240 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=11433",
+    "Radar Brdy (JV) / Radar Brdy - 912 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=brdy",
+    "Kocelovice (JZ) / Kocelovice - 525 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11487",
+    "Teplice (Z) / Teplice - 252 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=U1TEPL01",
+    "Teplice (JV) / Teplice - 252 m n.m. - Z směr": "https://www.chmi.cz/namerena-data/webkamera/teplice2-teplice",
+    "Smolnice (S) / Smolnice - 345 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=U1SMOL01",
+    "Rožmitál p. Třem. (J) / Rožmitál p. Třem. - 538 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=C1ROZM01",
+    "Volary (S) / Volary - 745 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=volary",
+    "Milešovka (J) / Milešovka - 836 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11464",
+    "Libín Prachatice (SZ) / Libín Prachatice - 1096 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=libinprach",
+    "Ústí nad Labem (J-JZ) / Ústí nad Labem - 377 m n.m. - JJZ směr": "http://kamery.chmi.cz/webcam.php?cam=11502",
+    "Příbram (JZ) / Příbram - 551 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=P1PRIB01",
+    "Doksany (JZ) / Doksany - 158 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11509",
     "Frymburk - 815 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=frymburk",
-    "Temelín - 505 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=11538",
-    "Praha-Libuš - 340 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=11520_2",
-    "Praha-Libuš - 340 m n.m. - VSV směr": "http://kamery.chmi.cz/webcam.php?cam=11520",
-    "Nadějkov - 610 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=C2NADV01",
-    "České Budějovice - 388 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=11546",
-    "Varnsdorf - 365 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=U2VARN01",
-    "Nové Hrady - 546 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=nove_hrady",
-    "Ondřejov - 485 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=P3ONDR01",
-    "Mrzky - 260 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=P2MRZK01",
-    "Vlašim - 415 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=P3VLAS01",
-    "Liberec - 397 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11603",
-    "Frýdlant - 339 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=U2FRYD01",
-    "Poděbrady - 189 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=H3PODE01",
-    "Turnov - 252 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=P2TURN01",
-    "Hejnice - 396 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=U2HEJN01",
-    "Jizerka - 858 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=P2KORE01",
-    "Jičín - 283 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=H3JICI01",
-    "Kostelní Myslová - 569 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11636",
-    "Labská bouda - 1320 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=H1LBOU01",
-    "Luční bouda - 1413 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=H1LUCB01",
-    "Sněžka - 1603 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=H1SNEZ01",
-    "Seč - 520 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=H3SECA01",
-    "Přibyslav - 530 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11659",
-    "Hradec Králové - 278 m n.m. - ZJZ směr": "http://kamery.chmi.cz/webcam.php?cam=H3HRAD01",
-    "Svratouch - 737 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11683",
-    "Kuchařovice - 334 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11698",
-    "Dukovany - 400 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=11693",
-    "Dyjákovice - 201 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=B2DYJA01",
-    "Nedvězí - 722 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=B2NEDV01",
-    "Polom - 748 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=11669",
-    "Broumov - 373 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=H3BROU01",
-    "Ústí nad Orlicí - 402 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11679",
-    "Brno - 240 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=B2BZAB01",
-    "Radar Skalky - 767 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=skalky",
-    "Kobylí - 172 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=B2KOBY01",
-    "Slaměnka - 1100 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=O2SLAM01",
-    "Luká - 510 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=11710",
-    "Paprsek - 1020 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=O2PAPR01",
-    "Ivanovice na Hane - 240 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=B1IVAN01",
-    "Šerák - 1328 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=11730",
-    "Osoblaha - 238 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=O1OSOB01",
-    "Olomouc - 210 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=O2OLOM01",
-    "Rýmařov - 603 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=O1RYMA01",
-    "Holešov - 224 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=11774",
-    "Vítkov - 490 m n.m. - JJZ směr": "http://kamery.chmi.cz/webcam.php?cam=O1VITK01",
-    "Bělotín - 298 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=O1BELO01",
-    "Maruška - 664 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=O3MARU02",
-    "Maruška - 664 m n.m.": "http://kamery.chmi.cz/webcam.php?cam=O3MARU01",
-    "Štítná nad Vláří - 325 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=B1STIT01",
-    "Vsetín - 387 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=O3VSET01",
-    "Ostrava-Poruba - 252 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=O1PORU01",
-    "Ostrava-Mošnov - 277 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=11782",
-    "Ostrava-Mošnov - 277 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=11782_2",
-    "Lysá hora - 1324 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=11787_1",
-    "Lysá hora - 1324 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=11787_2",
-    "Javorový vrch - 940 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=O1JAVR01",
-    "Lysá hora - 1324 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11787_3"
+    "Temelín (JV) / Temelín - 505 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=11538",
+    "Praha-Libuš (S) / Praha-Libuš - 340 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=11520_2",
+    "Praha-Libuš (VSV) / Praha-Libuš - 340 m n.m. - VSV směr": "http://kamery.chmi.cz/webcam.php?cam=11520",
+    "Nadějkov (JV) / Nadějkov - 610 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=C2NADV01",
+    "České Budějovice (Z) / České Budějovice - 388 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=11546",
+    "Varnsdorf (JV) / Varnsdorf - 365 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=U2VARN01",
+    "Nové Hrady (JZ) / Nové Hrady - 546 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=nove_hrady",
+    "Ondřejov (JV) / Ondřejov - 485 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=P3ONDR01",
+    "Mrzky (J) / Mrzky - 260 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=P2MRZK01",
+    "Vlašim (Z) / Vlašim - 415 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=P3VLAS01",
+    "Liberec (JZ) / Liberec - 397 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11603",
+    "Košetice (S) / Košetice - 534 m n.m. - S směr": "https://www.chmi.cz/namerena-data/webkamera/kosetice-kosetice",
+    "Frýdlant (JZ) / Frýdlant - 339 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=U2FRYD01",
+    "Poděbrady (SZ) / Poděbrady - 189 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=H3PODE01",
+    "Turnov (S) / Turnov - 252 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=P2TURN01",
+    "Hejnice (J) / Hejnice - 396 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=U2HEJN01",
+    "Jizerka (V) / Jizerka - 858 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=P2KORE01",
+    "Jičín (JZ) / Jičín - 283 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=H3JICI01",
+    "Kostelní Myslová (J) / Kostelní Myslová - 569 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11636",
+    "Labská bouda (J) / Labská bouda - 1320 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=H1LBOU01",
+    "Luční bouda (V) / Luční bouda - 1413 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=H1LUCB01",
+    "Pec pod Sněžkou (S) / Pec pod Sněžkou - 1046 m n.m. - S směr": "https://www.chmi.cz/namerena-data/webkamera/pecpodsnezkou-pec-pod-snezkou",
+    "Sněžka (Z) / Sněžka - 1603 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=H1SNEZ01",
+    "Seč (J) / Seč - 520 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=H3SECA01",
+    "Přibyslav (JZ) / Přibyslav - 530 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11659",
+    "Hradec Králové (Z-JZ) / Hradec Králové - 278 m n.m. - ZJZ směr": "http://kamery.chmi.cz/webcam.php?cam=H3HRAD01",
+    "Svratouch (J) / Svratouch - 737 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11683",
+    "Kuchařovice (J) / Kuchařovice - 334 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=11698",
+    "Dukovany (JV) / Dukovany - 400 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=11693",
+    "Dyjákovice (S) / Dyjákovice - 201 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=B2DYJA01",
+    "Nedvězí (J) / Nedvězí - 722 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=B2NEDV01",
+    "Polom (Z) / Polom - 748 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=11669",
+    "Broumov (SV) / Broumov - 373 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=H3BROU01",
+    "Ústí nad Orlicí (Z-JZ) / Ústí nad Orlicí - 402 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11679",
+    "Brno (SV) / Brno - 240 m n.m. - SV směr": "http://kamery.chmi.cz/webcam.php?cam=B2BZAB01",
+    "Radar Skalky (SZ) / Radar Skalky - 767 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=skalky",
+    "Kobylí (S) / Kobylí - 172 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=B2KOBY01",
+    "Slaměnka (J) / Slaměnka - 1100 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=O2SLAM01",
+    "Luká (S) / Luká - 510 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=11710",
+    "Paprsek (J) / Paprsek - 1020 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=O2PAPR01",
+    "Ivanovice na Hane (J) / Ivanovice na Hane - 240 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=B1IVAN01",
+    "Šerák (V) / Šerák - 1328 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=11730",
+    "Osoblaha (JZ) / Osoblaha - 238 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=O1OSOB01",
+    "Olomouc (J) / Olomouc - 210 m n.m. - J směr": "http://kamery.chmi.cz/webcam.php?cam=O2OLOM01",
+    "Rýmařov (SZ) / Rýmařov - 603 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=O1RYMA01",
+    "Holešov (Z) / Holešov - 224 m n.m. - Z směr": "http://kamery.chmi.cz/webcam.php?cam=11774",
+    "Vítkov (J-JZ) / Vítkov - 490 m n.m. - JJZ směr": "http://kamery.chmi.cz/webcam.php?cam=O1VITK01",
+    "Bělotín (V) / Bělotín - 298 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=O1BELO01",
+    "Maruška (V) / Maruška - 664 m n.m. - V směr": "http://kamery.chmi.cz/webcam.php?cam=O3MARU02",
+    "Maruška / Maruška - 664 m n.m.": "http://kamery.chmi.cz/webcam.php?cam=O3MARU01",
+    "Štítná nad Vláří (JV) / Štítná nad Vláří - 325 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=B1STIT01",
+    "Valašské Meziříčí (SV) / Valašské Meziříčí - 335 m n.m. - JV směr": "https://www.chmi.cz/namerena-data/webkamera/valmez-valasske-mezirici",
+    "Vsetín (JV) / Vsetín - 387 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=O3VSET01",
+    "Ostrava-Poruba (JV) / Ostrava-Poruba - 252 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=O1PORU01",
+    "Ostrava-Mošnov (S) / Ostrava-Mošnov - 277 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=11782",
+    "Ostrava-Mošnov (JJV) / Ostrava-Mošnov - 277 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=11782_2",
+    "Horní Bečva (SSZ) / Horní Bečva - 618 m n.m. - SSZ směr": "https://www.chmi.cz/namerena-data/webkamera/hornibecva-horni-becva",
+    "Lysá hora (SZ) / Lysá hora - 1324 m n.m. - SZ směr": "http://kamery.chmi.cz/webcam.php?cam=11787_1",
+    "Lysá hora (JV) / Lysá hora - 1324 m n.m. - JV směr": "http://kamery.chmi.cz/webcam.php?cam=11787_2",
+    "Javorový vrch (S) / Javorový vrch - 940 m n.m. - S směr": "http://kamery.chmi.cz/webcam.php?cam=O1JAVR01",
+    "Lysá hora (JZ) / Lysá hora - 1324 m n.m. - JZ směr": "http://kamery.chmi.cz/webcam.php?cam=11787_3"
 }
+
 
 
 # ----------------------
