@@ -338,6 +338,21 @@ if st.session_state.get("last_update_time") is not None:
 
 st.markdown("""
 <style>
+/* Reduce space ABOVE the app content (but keep Streamlit top bar) */
+div[data-testid="stAppViewContainer"] > .main {
+    padding-top: 1.2rem;
+}
+
+/* Reduce extra top spacing inside main block */
+div.block-container {
+    padding-top: 1rem;
+}
+
+/* Optional: tighten title spacing */
+h1 {
+    margin-top: 0.2rem;
+}
+
 /* remove gap under image */
 img {
     border-radius: 8px;
