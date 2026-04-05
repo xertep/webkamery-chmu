@@ -326,11 +326,11 @@ if st.session_state.get("last_update_time") is not None:
     age = time.time() - st.session_state.last_update_time
 
     if age < 120:
-        status = "🟢 živě"
+        status = "🟢"
     elif age < 240:
-        status = "🟡 nedávno"
+        status = "🟡"
     else:
-        status = "⚪ starší"
+        status = "⚪"
 
     st.caption(
         f"{status} • Aktualizováno {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))} UTC"
