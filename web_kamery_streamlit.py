@@ -375,7 +375,7 @@ img {
 
 /* Link button spacing */
 div[data-testid="stLinkButton"] {
-    margin-top: -8px;
+    margin-top: -4px;
 }
 
 </style>
