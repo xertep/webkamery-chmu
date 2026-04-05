@@ -37,62 +37,67 @@ def scrape_images():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        page.goto(URL, timeout=60000)
-        page.wait_for_selector("img")
 
-        count = 0
+        page.goto(URL, timeout=60000, wait_until="networkidle")
+        page.wait_for_timeout(2000)
 
         for page_number in range(1, 10):
+
             if page_number > 1:
                 try:
-                    btn = page.locator(f"//button[contains(@class,'chmi-pagination__btn') and text()='{page_number}']")
+                    btn = page.locator(
+                        f"//button[contains(@class,'chmi-pagination__btn') and text()='{page_number}']"
+                    )
+
                     btn.scroll_into_view_if_needed()
                     btn.click()
-                    page.wait_for_timeout(3000)
+
+                    # 🔑 IMPORTANT: wait for full re-render
+                    page.wait_for_load_state("networkidle")
+                    page.wait_for_timeout(1500)
+
                 except:
                     continue
 
             soup = BeautifulSoup(page.content(), "html.parser")
 
             for img in soup.find_all("img"):
-                src = img.get("src", "")
+
+                # 🔑 FIX: check both src AND lazy-load src
+                src = img.get("src") or img.get("data-src") or ""
                 alt = img.get("alt", "")
 
-                # 🔑 FILTER → only real webcam thumbnails
                 if not alt.startswith("Náhled webkamery"):
                     continue
 
                 clean_alt = re.sub(r'^Náhled webkamery\s+', '', alt)
 
-                # 🔑 extract place + direction
                 match = re.match(r"(.+?)\s*\((.+?)\)", clean_alt)
 
                 if match:
                     place = match.group(1).strip()
                     direction = match.group(2).strip()
-
                     key = f"{place} ({direction})"
                 else:
                     key = clean_alt.strip()
 
+                # -------------------------
+                # CASE 1: base64 image
+                # -------------------------
                 if src.startswith("data:image"):
                     try:
                         header, data = src.split(",", 1)
                         image_bytes = base64.b64decode(data)
 
-                        # detect gif vs jpg from header
                         is_gif = "gif" in header.lower()
 
                         if is_gif:
-                            # keep raw bytes → preserves animation
                             image_data.append({
                                 "img_bytes": image_bytes,
                                 "key": key,
                                 "is_gif": True
                             })
                         else:
-                            # resize only static images
-                            from PIL import Image
                             image = Image.open(BytesIO(image_bytes))
                             image = image.convert("RGB").resize((WIDTH, HEIGHT))
 
@@ -105,7 +110,30 @@ def scrape_images():
                                 "is_gif": False
                             })
 
-                        count += 1
+                    except:
+                        pass
+
+                # -------------------------
+                # CASE 2: real image URL (NEW FIX)
+                # -------------------------
+                elif src.startswith("http"):
+                    try:
+                        import requests
+
+                        r = requests.get(src, timeout=10)
+                        image_bytes = r.content
+
+                        image = Image.open(BytesIO(image_bytes))
+                        image = image.convert("RGB").resize((WIDTH, HEIGHT))
+
+                        buffer = BytesIO()
+                        image.save(buffer, format="JPEG")
+
+                        image_data.append({
+                            "img_bytes": buffer.getvalue(),
+                            "key": key,
+                            "is_gif": False
+                        })
 
                     except:
                         pass
