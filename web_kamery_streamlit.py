@@ -27,14 +27,11 @@ st.set_page_config(
     layout="wide"
     )
 
-st_autorefresh(interval=600000, key="refresh")
+st_autorefresh(interval=120000, key="refresh")
 
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time.time()
 
-if time.time() - st.session_state.last_refresh > 600:
-    st.session_state.last_refresh = time.time()
-    st.rerun()
 
 URL = "https://www.chmi.cz/namerena-data/webkamery"
 
@@ -379,20 +376,15 @@ else:
     # show cached immediately
     final = st.session_state.cached_data
 
-    # try background refresh (no spinner)
     try:
         image_data = scrape_images()
         new_final = match_webcams(image_data, webcam_links)
 
-        # update only if changed
-        if new_final != st.session_state.cached_data:
-            st.session_state.cached_data = new_final
-            st.session_state.last_update_time = time.time()
-
-        final = st.session_state.cached_data
+        st.session_state.cached_data = new_final
+        st.session_state.last_update_time = time.time()  # ALWAYS update
 
     except:
-        final = st.session_state.cached_data
+        pass
 
 
 
