@@ -10,8 +10,8 @@ import time
 from streamlit_autorefresh import st_autorefresh
 
 # install playwright browser only if not already installed
-# if not os.path.exists("/home/appuser/.cache/ms-playwright"):
-#    subprocess.run(["playwright", "install", "chromium"])
+if not os.path.exists("/home/appuser/.cache/ms-playwright"):
+    subprocess.run(["playwright", "install", "chromium"])
 
 from playwright.sync_api import sync_playwright
 
