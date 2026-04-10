@@ -63,6 +63,13 @@ def scrape_images():
             r = session.post(
                 "https://www.chmi.cz/files/portal/docs/meteo/kam/webkamery_data.php",
                 data={"page": page_number},
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Referer": "https://www.chmi.cz/namerena-data/webkamery",
+                    "Origin": "https://www.chmi.cz",
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                },
                 timeout=20
             )
 
