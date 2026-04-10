@@ -4,16 +4,10 @@ import re
 from bs4 import BeautifulSoup
 from PIL import Image
 from io import BytesIO
-import os
-import subprocess
 import time
 from streamlit_autorefresh import st_autorefresh
+import requests
 
-# install playwright browser only if not already installed
-# if not os.path.exists("/home/appuser/.cache/ms-playwright"):
-#    subprocess.run(["playwright", "install", "chromium"])
-
-from playwright.sync_api import sync_playwright
 
 if "cached_data" not in st.session_state:
     st.session_state.cached_data = None
@@ -47,8 +41,9 @@ def create_placeholder():
 
 PLACEHOLDER_IMG = create_placeholder()
 
-if "cached_data" not in st.session_state:
-    st.session_state.cached_data = None
+#if "cached_data" not in st.session_state:
+ #   st.session_state.cached_data = None
+
 
 # ----------------------
 # CACHE
@@ -57,123 +52,72 @@ if "cached_data" not in st.session_state:
 def scrape_images():
     image_data = []
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0"
+    })
 
-        page.goto(URL, timeout=60000, wait_until="networkidle")
-        page.wait_for_timeout(2000)
+    for page_number in range(1, 10):
 
-        for page_number in range(1, 10):
+        try:
+            r = session.post(
+                "https://www.chmi.cz/files/portal/docs/meteo/kam/webkamery_data.php",
+                data={"page": page_number},
+                timeout=20
+            )
 
-            if page_number > 1:
+            soup = BeautifulSoup(r.text, "html.parser")
+
+        except:
+            continue
+
+        for a in soup.find_all("a", href=True):
+
+            img = a.find("img")
+            if not img:
+                continue
+
+            href = a["href"]
+            src = img.get("src") or img.get("data-src") or ""
+            alt = img.get("alt", "")
+
+            if href.startswith("/"):
+                href = "https://www.chmi.cz" + href
+
+            if not alt.startswith("Náhled webkamery"):
+                continue
+
+            clean_alt = re.sub(r'^Náhled webkamery\s+', '', alt)
+
+            match = re.match(r"(.+?)\s*\((.+?)\)", clean_alt)
+
+            if match:
+                place = match.group(1).strip()
+                direction = match.group(2).strip()
+                key = f"{place} ({direction})"
+            else:
+                key = clean_alt.strip()
+
+            if src.startswith("http"):
                 try:
-                    btn = page.locator(
-                        f"//button[contains(@class,'chmi-pagination__btn') and text()='{page_number}']"
-                    )
+                    img_r = session.get(src, timeout=10)
+                    image_bytes = img_r.content
 
-                    btn.scroll_into_view_if_needed()
-                    btn.click()
+                    image = Image.open(BytesIO(image_bytes))
+                    image = image.convert("RGB").resize((WIDTH, HEIGHT))
 
-                    # 🔑 IMPORTANT: wait for full re-render
-                    page.wait_for_load_state("networkidle")
-                    page.wait_for_selector("img[alt^='Náhled webkamery']", timeout=5000)
+                    buffer = BytesIO()
+                    image.save(buffer, format="JPEG")
+
+                    image_data.append({
+                        "img_bytes": buffer.getvalue(),
+                        "key": key,
+                        "link": href,
+                        "is_gif": False
+                    })
 
                 except:
-                    continue
-
-            soup = BeautifulSoup(page.content(), "html.parser")
-
-            for a in soup.find_all("a", href=True):
-
-                img = a.find("img")
-                if not img:
-                    continue
-
-                href = a["href"]  # 🔑 THIS IS THE PUBLIC LINK
-
-                src = img.get("src") or img.get("data-src") or ""
-                alt = img.get("alt", "")
-
-                # 🔑 make absolute URL if needed
-                if href.startswith("/"):
-                    href = "https://www.chmi.cz" + href
-
-                if not alt.startswith("Náhled webkamery"):
-                    continue
-
-                clean_alt = re.sub(r'^Náhled webkamery\s+', '', alt)
-
-                match = re.match(r"(.+?)\s*\((.+?)\)", clean_alt)
-
-                if match:
-                    place = match.group(1).strip()
-                    direction = match.group(2).strip()
-                    key = f"{place} ({direction})"
-                else:
-                    key = clean_alt.strip()
-
-                # -------------------------
-                # CASE 1: base64 image
-                # -------------------------
-                if src.startswith("data:image"):
-                    try:
-                        header, data = src.split(",", 1)
-                        image_bytes = base64.b64decode(data)
-
-                        is_gif = "gif" in header.lower()
-
-                        if is_gif:
-                            image_data.append({
-                                "img_bytes": image_bytes,
-                                "key": key,
-                                "link": href,
-                                "is_gif": True
-                            })
-                        else:
-                            image = Image.open(BytesIO(image_bytes))
-                            image = image.convert("RGB").resize((WIDTH, HEIGHT))
-
-                            buffer = BytesIO()
-                            image.save(buffer, format="JPEG")
-
-                            image_data.append({
-                                "img_bytes": buffer.getvalue(),
-                                "key": key,
-                                "link": href,
-                                "is_gif": False
-                            })
-
-                    except:
-                        pass
-
-                # -------------------------
-                # CASE 2: real image URL (NEW FIX)
-                # -------------------------
-                elif src.startswith("http"):
-                    try:
-                        import requests
-
-                        r = requests.get(src, timeout=10)
-                        image_bytes = r.content
-
-                        image = Image.open(BytesIO(image_bytes))
-                        image = image.convert("RGB").resize((WIDTH, HEIGHT))
-
-                        buffer = BytesIO()
-                        image.save(buffer, format="JPEG")
-
-                        image_data.append({
-                            "img_bytes": buffer.getvalue(),
-                            "key": key,
-                            "link": href,
-                            "is_gif": False
-                        })
-
-                    except:
-                        pass
-
-        browser.close()
+                    pass
 
     return image_data
 
