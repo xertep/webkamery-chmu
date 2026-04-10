@@ -58,7 +58,11 @@ def scrape_images():
     image_data = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        try:
+            browser = p.chromium.launch(headless=True)
+        except Exception as e:
+            st.error("Playwright failed to launch browser.")
+            raise e
         page = browser.new_page()
 
         page.goto(URL, timeout=60000, wait_until="networkidle")
