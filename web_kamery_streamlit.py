@@ -10,8 +10,8 @@ import time
 from streamlit_autorefresh import st_autorefresh
 
 # install playwright browser only if not already installed
-# if not os.path.exists("/home/appuser/.cache/ms-playwright"):
-#    subprocess.run(["playwright", "install", "chromium"])
+if not os.path.exists("/home/appuser/.cache/ms-playwright"):
+    subprocess.run(["playwright", "install", "chromium"])
 
 from playwright.sync_api import sync_playwright
 
@@ -58,7 +58,11 @@ def scrape_images():
     image_data = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        try:
+            browser = p.chromium.launch(headless=True)
+        except Exception as e:
+            st.error("Playwright failed to launch browser.")
+            raise e
         page = browser.new_page()
 
         page.goto(URL, timeout=60000, wait_until="networkidle")
