@@ -3,3 +3,4 @@ beautifulsoup4
 pillow
 requests
 streamlit-autorefresh
+playwright
