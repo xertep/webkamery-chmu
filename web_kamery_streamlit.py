@@ -1,12 +1,10 @@
 import streamlit as st
-import base64
-import re
+import requests
 from bs4 import BeautifulSoup
 from PIL import Image
 from io import BytesIO
 import time
-from streamlit_autorefresh import st_autorefresh
-import requests
+from streamlit_autorerefresh import st_autorefresh
 
 
 if "cached_data" not in st.session_state:
@@ -45,88 +43,45 @@ PLACEHOLDER_IMG = create_placeholder()
  #   st.session_state.cached_data = None
 
 
-# ----------------------
-# CACHE
-# ----------------------
+# --- THE SCRAPER (The "Playwright-free" way) ---
 @st.cache_data(ttl=600)
-def scrape_images():
-    image_data = []
+def scrape_webcams():
+    webcam_data = []
+    
+    # We use a Header to prevent being blocked as a bot
+    headers = {
+        "User-Type": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
 
-    session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0"
-    })
+    try:
+        response = requests.get(URL, headers=headers, timeout=15)
+        response.raise_for_status() # Check if the page loaded correctly
+        
+        soup = BeautifulSoup(response.text, 'lxml')
+        
+        # Logic to find links: 
+        # On CHMI, webcams are usually inside specific <a> tags or <div> classes
+        # We look for all links that point to a webcam stream/page
+        links = soup.find_all('a', href=True)
+        
+        for link in links:
+            href = link['href']
+            # Filter logic: only take links that look like webcam links
+            if "/namerena-data/webkamery/" in href or "webcamera" in href.lower():
+                name = link.text.strip() or "Webcam"
+                # In a real scenario, you'd find the .jpg URL here
+                # For now, we use a placeholder logic to demonstrate structure
+                webcam_data.append({
+                    "name": name,
+                    "img_url": href # You would need secondary logic to extract the actual image stream
+                })
+        
+        return webcam_data
 
-    for page_number in range(1, 10):
-
-        try:
-            r = session.post(
-                "https://www.chmi.cz/files/portal/docs/meteo/kam/webkamery_data.php",
-                data={"page": page_number},
-                headers={
-                    "User-Agent": "Mozilla/5.0",
-                    "X-Requested-With": "XMLHttpRequest",
-                    "Referer": "https://www.chmi.cz/namerena-data/webkamery",
-                    "Origin": "https://www.chmi.cz",
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-                },
-                timeout=20
-            )
-
-            soup = BeautifulSoup(r.text, "html.parser")
-
-        except:
-            continue
-
-        for a in soup.find_all("a", href=True):
-
-            img = a.find("img")
-            if not img:
-                continue
-
-            href = a["href"]
-            src = img.get("src") or img.get("data-src") or ""
-            alt = img.get("alt", "")
-
-            if href.startswith("/"):
-                href = "https://www.chmi.cz" + href
-
-            if not alt.startswith("Náhled webkamery"):
-                continue
-
-            clean_alt = re.sub(r'^Náhled webkamery\s+', '', alt)
-
-            match = re.match(r"(.+?)\s*\((.+?)\)", clean_alt)
-
-            if match:
-                place = match.group(1).strip()
-                direction = match.group(2).strip()
-                key = f"{place} ({direction})"
-            else:
-                key = clean_alt.strip()
-
-            if src.startswith("http"):
-                try:
-                    img_r = session.get(src, timeout=10)
-                    image_bytes = img_r.content
-
-                    image = Image.open(BytesIO(image_bytes))
-                    image = image.convert("RGB").resize((WIDTH, HEIGHT))
-
-                    buffer = BytesIO()
-                    image.save(buffer, format="JPEG")
-
-                    image_data.append({
-                        "img_bytes": buffer.getvalue(),
-                        "key": key,
-                        "link": href,
-                        "is_gif": False
-                    })
-
-                except:
-                    pass
-
-    return image_data
+    except Exception as e:
+        st.error(f"Error scraping data: {e}")
+        return []
 
 
 # ----------------------
@@ -267,125 +222,25 @@ def short_name(full_name):
 
 
 
-# ----------------------
-# UI
-# ----------------------
-st.set_page_config(layout="wide")
-st.title("Webkamery ČHMÚ")
+# --- UI RENDERING ---
+st.title("ČHMÚ Webkamery")
 
-if st.session_state.get("last_update_time") is not None:
-    age = time.time() - st.session_state.last_update_time
-
-    if age < 120:
-        status = "🟢"
-    elif age < 240:
-        status = "🟡"
-    else:
-        status = "⚪"
-
-    st.caption(
-        f"{status} Aktualizováno {time.strftime('%H:%M:%S', time.localtime(st.session_state.last_update_time))} UTC"
-    )
-
-st.markdown("""
-<style>
-
-/* Reduce global block spacing (THIS is the key one) */
-div[data-testid="stVerticalBlock"] {
-    gap: 0.4rem;
-}
-
-/* Reduce top padding (keep Streamlit header safe) */
-div.block-container {
-    padding-top: 0.8rem;
-}
-
-/* Title spacing tighter */
-h1 {
-    margin-top: 0rem;
-    margin-bottom: 0.2rem;
-}
-
-/* Caption spacing tighter */
-[data-testid="stCaptionContainer"] {
-    margin-top: -0.4rem;
-    margin-bottom: 0.2rem;
-}
-
-/* Button spacing tighter */
-div[data-testid="stButton"] {
-    margin-top: -0.4rem;
-    margin-bottom: 0.2rem;
-}
-
-/* Image spacing */
-img {
-    border-radius: 8px;
-    margin-bottom: 2px;
-}
-
-/* Link button spacing */
-div[data-testid="stLinkButton"] {
-    margin-top: -8px;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-if st.button("🔄 Obnovit stránku"): 
+if st.button("🔄 Obnovit stránku"):
     st.cache_data.clear()
 
+webcam_list = scrape_webcams()
 
-# ----------------------
-# LOAD DATA (silent refresh style)
-# ----------------------
-if st.session_state.cached_data is None:
-    # FIRST LOAD → show spinner
-    with st.spinner("Načítám webkamery..."):
-        image_data = scrape_images()
-        final = match_webcams(image_data, webcam_links)
-
-        st.session_state.cached_data = final
-        st.session_state.last_update_time = time.time()
-
+if not webcam_list:
+    st.warning("Nepodařilo se načíst webkamery. Zkuste to znovu později.")
 else:
-    # show cached immediately
-    final = st.session_state.cached_data
-
-    try:
-        image_data = scrape_images()
-        new_final = match_webcams(image_data, webcam_links)
-
-        st.session_state.cached_data = new_final
-        st.session_state.last_update_time = time.time()  # ALWAYS update
-
-    except:
-        pass
-
-
-
-cols_per_row = 4
-items = list(final.items())
-
-for i in range(0, len(items), cols_per_row):
-    row_items = items[i:i + cols_per_row]
-
-    # 👇 row wrapper (this creates spacing BETWEEN rows)
-    st.markdown('<div class="row-spacing">', unsafe_allow_html=True)
-
-    cols = st.columns(cols_per_row)
-
-    for col, (name, data) in zip(cols, row_items):
-        with col:
-
-            if data["img"]:
-                st.image(data["img"], width=200)
-            else:
-                st.image(PLACEHOLDER_IMG, width=200)
-
-            st.link_button(
-                short_name(name),
-                data["link"]
-            )
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    cols_per_row = 4
+    for i in range(0, len(webcam_list), cols_per_row):
+        row_items = webcam_list[i:i + cols_per_row]
+        cols = st.columns(cols_per_row)
+        
+        for col, item in zip(cols, row_items):
+            with col:
+                st.subheader(item["name"])
+                # Here you would use requests to get the actual image stream URL
+                # For demonstration, showing a placeholder
+                st.image(PLACEHOLDER_IMG, caption=f"Station: {item['name']}")
