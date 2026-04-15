@@ -1,6 +1,7 @@
 streamlit
 playwright
 beautifulsoup4
+lxml
 pillow
 requests
 streamlit-autorefresh
