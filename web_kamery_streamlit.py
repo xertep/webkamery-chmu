@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from PIL import Image
 from io import BytesIO
 import time
-from streamlit_autorerefresh import st_autorefresh
+from streamlit_autorefresh import st_autorefresh
 
 
 if "cached_data" not in st.session_state:
